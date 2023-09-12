@@ -23,12 +23,27 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
     /**
      *
      */
-    mapping(address => GameInfo) _createdGames;
+    uint256 internal _ticketPrice = 10**18 / 100; // 0.01 coin
+
     /**
      *
      */
+    uint256 internal _baseRewardingAmount = 10**18; // 1 coin
 
-    address[] _games;
+    /**
+     * @dev Extra reward based on game performance (income). Percentage value, range = [0, 100].
+     */
+    uint256 internal _bonusRewardingRate = 90; // 90%
+
+    /**
+     *
+     */
+    address[] private _games;
+
+    /**
+     *
+     */
+    mapping(address => GameInfo) private _createdGames;
 
     /**
      *

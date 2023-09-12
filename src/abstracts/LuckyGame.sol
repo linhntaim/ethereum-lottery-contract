@@ -162,7 +162,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      *
      */
     function rewardReady() public view returns (bool) {
-        return getBalance() < _baseRewardingAmount;
+        return getBalance() >= _baseRewardingAmount;
     }
 
     /**
@@ -319,6 +319,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         _drawState = DrawState.REWARDING;
 
         uint256 balanceBefore = getBalance();
+        uint256 balanceAfter = balanceBefore;
 
         // Execute rewarding
         uint256 rewarded = 0;
@@ -330,14 +331,17 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
                 winner = _winners[i];
                 winningAmount = _winningAmounts[winner];
                 if (winningAmount > 0) {
+                    require(balanceAfter >= winningAmount, "Insuficient funds.");
+
                     payable(winner).transfer(winningAmount);
                     rewarded += 1;
                     rewardedAmount += rewardedAmount;
+
+                    // update balance after
+                    balanceAfter = getBalance();
                 }
             }
         }
-
-        uint256 balanceAfter = getBalance();
 
         // Checkpoint to make sure the current balance is fine
         assert(balanceAfter == balanceBefore - rewardedAmount);
@@ -360,11 +364,14 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         if (_drawState != DrawState.REWARDED) {
             return;
         }
+        uint256 withdrawingAmount = getBalance();
+        if (withdrawingAmount == 0) {
+            return;
+        }
 
         _checkHubOwned();
 
         address to = hubAddress();
-        uint256 withdrawingAmount = getBalance();
         payable(to).transfer(withdrawingAmount);
         emit Withdrawn(_msgSender(), to, withdrawingAmount);
     }

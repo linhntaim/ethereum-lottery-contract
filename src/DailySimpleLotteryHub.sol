@@ -10,21 +10,6 @@ import "./LuckyNumbers.sol";
  */
 contract DailySimpleLotteryHub is LuckyGameHub {
     /**
-     *
-     */
-    uint256 private _ticketPrice = 10**18 / 100; // 0.01 coin
-
-    /**
-     *
-     */
-    uint256 private _baseRewardingAmount = 10**18; // 1 coin
-
-    /**
-     * @dev Extra reward based on game performance (income). Percentage value, range = [0, 100].
-     */
-    uint256 private _bonusRewardingRate = 90; // 90%
-
-    /**
      * Start at => Game
      */
     mapping(uint256 => address) private _dailyGames;
@@ -53,8 +38,8 @@ contract DailySimpleLotteryHub is LuckyGameHub {
         LuckyNumbers game = new LuckyNumbers(
             this,
             _ticketPrice,
-            currentDate + 1 * 3600, // Started at 01:00 UTC
-            currentDate + 23 * 3600, // Ended at 23:00 UTC
+            currentDate + 1 * 3600, // Started at 01:00:00 UTC
+            currentDate + 23 * 3600 - 1, // Ended at 22:59:59 UTC
             _baseRewardingAmount,
             _bonusRewardingRate,
             6,
