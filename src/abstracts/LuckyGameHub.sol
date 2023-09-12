@@ -4,11 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/ILuckyGame.sol";
 import "../interfaces/ILuckyGameHub.sol";
+import "../utils/HasBalance.sol";
 
 /**
  *
  */
-abstract contract LuckyGameHub is ILuckyGameHub, Ownable {
+abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
     /**
      *
      */
@@ -61,11 +62,12 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable {
      */
     function create() external returns (address) {
         address game = _create();
-        if (!owned(game)) {
-            _createdGames[game].createdAt = block.timestamp;
-            _games.push(game);
-            emit GameCreated(_msgSender(), game);
-        }
+
+        _createdGames[game].createdAt = block.timestamp;
+        _games.push(game);
+
+        emit GameCreated(_msgSender(), game);
+
         return game;
     }
 

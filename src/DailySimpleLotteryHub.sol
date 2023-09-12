@@ -12,17 +12,17 @@ contract DailySimpleLotteryHub is LuckyGameHub {
     /**
      *
      */
-    uint256 private _ticketPrice;
+    uint256 private _ticketPrice = 10**18 / 100; // 0.01 coin
 
     /**
      *
      */
-    uint256 private _baseRewardingAmount;
+    uint256 private _baseRewardingAmount = 10**18; // 1 coin
 
     /**
-     *
+     * @dev Extra reward based on game performance (income). Percentage value, range = [0, 100].
      */
-    uint256 private _bonusRewardingRate = 90;
+    uint256 private _bonusRewardingRate = 90; // 90%
 
     /**
      * Start at => Game
@@ -42,24 +42,30 @@ contract DailySimpleLotteryHub is LuckyGameHub {
      *
      */
     function _create() internal override returns (address) {
-        uint256 currentDate = _currentDate();
-        if (_dailyGames[currentDate] == address(0)) {
-            LuckyNumbers game = new LuckyNumbers(
-                this,
-                _ticketPrice,
-                currentDate + 1 * 3600,
-                currentDate + 23 * 3600,
-                _baseRewardingAmount,
-                _bonusRewardingRate,
-                6,
-                new NumberRangeRoller(0, 9),
-                true,
-                true
-            );
-            _dailyGames[currentDate] = address(game);
+        uint256 currentDate = _currentDate(); // UTC
 
-            payable(_dailyGames[currentDate]).transfer(_baseRewardingAmount);
-        }
+        require(
+            _dailyGames[currentDate] == address(0),
+            "Game for today has been already created."
+        );
+        require(getBalance() >= _baseRewardingAmount, "Fund is not enough.");
+
+        LuckyNumbers game = new LuckyNumbers(
+            this,
+            _ticketPrice,
+            currentDate + 1 * 3600, // Started at 01:00 UTC
+            currentDate + 23 * 3600, // Ended at 23:00 UTC
+            _baseRewardingAmount,
+            _bonusRewardingRate,
+            6,
+            new NumberRangeRoller(0, 9),
+            true,
+            true
+        );
+        _dailyGames[currentDate] = address(game);
+
+        payable(_dailyGames[currentDate]).transfer(_baseRewardingAmount);
+
         return _dailyGames[currentDate];
     }
 
