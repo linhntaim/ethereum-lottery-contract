@@ -1,0 +1,3 @@
+# ethereum-lottery-contract
+
+In progress...
