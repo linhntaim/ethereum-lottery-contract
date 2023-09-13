@@ -26,4 +26,9 @@ interface ILuckyGameHub {
      *
      */
     function create() external returns (address);
+
+    /**
+     *
+     */
+    function withdraw() external;
 }

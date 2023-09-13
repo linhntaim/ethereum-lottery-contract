@@ -47,24 +47,24 @@ contract LuckyNumbers is LuckyGame {
      *
      */
     constructor(
-        ILuckyGameHub hub,
+        ILuckyGameHub hubContract,
         uint256 ticketPrice,
+        uint256 ticketFeeRate,
         uint256 startAt,
         uint256 endAt,
-        uint256 baseRewardingAmount,
-        uint256 bonusRewardingRate,
+        uint256 baseRewardAmount,
         uint256 ticketNumCount,
         INumberRoller numberRoller,
         bool ticketNumRepetitionEnabled,
         bool ticketNumOrderMattered
     )
         LuckyGame(
-            hub,
+            hubContract,
             ticketPrice,
+            ticketFeeRate,
             startAt,
             endAt,
-            baseRewardingAmount,
-            bonusRewardingRate
+            baseRewardAmount
         )
     {
         require(ticketNumCount > 0, "Ticket cannot be empty.");
@@ -277,7 +277,7 @@ contract LuckyNumbers is LuckyGame {
 
             mapping(address => uint256) storage mappingLots = winningList.times;
             uint256 totalLots = winningList.sumTimes;
-            uint256 winningAmountPerLot = getRewardingAmount() / totalLots;
+            uint256 winningAmountPerLot = getRewardAmount() / totalLots;
             for (uint256 i = 0; i < _winners.length; ++i) {
                 _winningAmounts[_winners[i]] =
                     winningAmountPerLot *

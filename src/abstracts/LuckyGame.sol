@@ -34,6 +34,11 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     uint256 internal _ticketPrice;
 
     /**
+     * @dev Percentage value, range = [0, 100].
+     */
+    uint256 internal _ticketFeeRate;
+
+    /**
      *
      */
     uint256 internal _startAt;
@@ -46,12 +51,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    uint256 internal _baseRewardingAmount;
-
-    /**
-     * @dev Extra reward based on performance (income). Percentage value, range = [0, 100].
-     */
-    uint256 internal _bonusRewardingRate;
+    uint256 internal _baseRewardAmount;
 
     /**
      *
@@ -118,16 +118,20 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      *
      */
     constructor(
-        ILuckyGameHub hub,
+        ILuckyGameHub hubContract,
         uint256 ticketPrice,
+        uint256 ticketFeeRate,
         uint256 startAt,
         uint256 endAt,
-        uint256 baseRewardingAmount,
-        uint256 bonusRewardingRate
-    ) HubOwned(hub) {
+        uint256 baseRewardAmount
+    ) HubOwned(hubContract) {
         require(
-            baseRewardingAmount > ticketPrice,
+            baseRewardAmount > ticketPrice,
             "The base rewarding amount should be logically bigger than the ticket price."
+        );
+        require(
+            ticketFeeRate <= 100,
+            "Rate should be in the range from 0 to 100."
         );
 
         _paused = false;
@@ -135,11 +139,9 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         _sumTickets = 0;
 
         _ticketPrice = ticketPrice;
+        _ticketFeeRate = ticketFeeRate;
         _setTime(startAt, endAt);
-        _baseRewardingAmount = baseRewardingAmount;
-        _bonusRewardingRate = bonusRewardingRate > 100
-            ? 100
-            : bonusRewardingRate;
+        _baseRewardAmount = baseRewardAmount;
     }
 
     /**
@@ -162,7 +164,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      *
      */
     function rewardReady() public view returns (bool) {
-        return getBalance() >= _baseRewardingAmount;
+        return getBalance() >= _baseRewardAmount;
     }
 
     /**
@@ -170,6 +172,20 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      */
     function getIncome() public view returns (uint256) {
         return _sumTickets * _ticketPrice;
+    }
+
+    /**
+     *
+     */
+    function getFees() public view returns (uint256) {
+        return (getIncome() * _ticketFeeRate) / 100;
+    }
+
+    /**
+     *
+     */
+    function getRewardAmount() public view returns (uint256) {
+        return _baseRewardAmount + (getIncome() - getFees());
     }
 
     /**
@@ -184,20 +200,6 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      */
     function getWinningAmount(address winner) public view returns (uint256) {
         return _winningAmounts[winner];
-    }
-
-    /**
-     *
-     */
-    function getBonusRewardingAmount() public view returns (uint256) {
-        return (getIncome() * _bonusRewardingRate) / 100;
-    }
-
-    /**
-     *
-     */
-    function getRewardingAmount() public view returns (uint256) {
-        return _baseRewardingAmount + getBonusRewardingAmount();
     }
 
     /**
@@ -331,7 +333,10 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
                 winner = _winners[i];
                 winningAmount = _winningAmounts[winner];
                 if (winningAmount > 0) {
-                    require(balanceAfter >= winningAmount, "Insuficient funds.");
+                    require(
+                        balanceAfter >= winningAmount,
+                        "Insuficient funds."
+                    );
 
                     payable(winner).transfer(winningAmount);
                     rewarded += 1;
@@ -371,7 +376,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
 
         _checkHubOwned();
 
-        address to = hubAddress();
+        address to = hub();
         payable(to).transfer(withdrawingAmount);
         emit Withdrawn(_msgSender(), to, withdrawingAmount);
     }

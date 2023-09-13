@@ -26,22 +26,21 @@ contract DailySimpleLotteryHub is LuckyGameHub {
     /**
      *
      */
-    function _create() internal override returns (address) {
+    function _create(uint256 accumulatedRewardAmount) internal override returns (address) {
         uint256 currentDate = _currentDate(); // UTC
 
         require(
             _dailyGames[currentDate] == address(0),
             "Game for today has been already created."
         );
-        require(getBalance() >= _baseRewardingAmount, "Fund is not enough.");
 
         LuckyNumbers game = new LuckyNumbers(
             this,
             _ticketPrice,
+            _ticketFeeRate,
             currentDate + 1 * 3600, // Started at 01:00:00 UTC
             currentDate + 23 * 3600 - 1, // Ended at 22:59:59 UTC
-            _baseRewardingAmount,
-            _bonusRewardingRate,
+            accumulatedRewardAmount,
             6,
             new NumberRangeRoller(0, 9),
             true,
@@ -49,7 +48,7 @@ contract DailySimpleLotteryHub is LuckyGameHub {
         );
         _dailyGames[currentDate] = address(game);
 
-        payable(_dailyGames[currentDate]).transfer(_baseRewardingAmount);
+        payable(_dailyGames[currentDate]).transfer(accumulatedRewardAmount);
 
         return _dailyGames[currentDate];
     }

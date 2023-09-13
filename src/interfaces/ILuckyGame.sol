@@ -8,6 +8,11 @@ interface ILuckyGame {
     /**
      *
      */
+    function getFees() external view returns (uint256);
+
+    /**
+     *
+     */
     function getWinners() external view returns (address[] memory);
 
     /**
