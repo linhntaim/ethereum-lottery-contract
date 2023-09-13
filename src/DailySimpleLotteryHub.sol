@@ -10,7 +10,7 @@ import "./LuckyNumbers.sol";
  */
 contract DailySimpleLotteryHub is LuckyGameHub {
     /**
-     * Start at => Game
+     * @dev Date => Game
      */
     mapping(uint256 => address) private _dailyGames;
 
