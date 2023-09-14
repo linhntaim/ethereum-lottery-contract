@@ -10,17 +10,22 @@ interface ILuckyGameHub {
     /**
      *
      */
-    function latest() external view returns (address);
+    function getTicketPrice() external view returns (uint256);
 
     /**
      *
      */
-    function latestContract() external view returns (ILuckyGame);
+    function getTicketFeeRate() external view returns (uint256);
 
     /**
      *
      */
-    function owned(address game) external view returns (bool);
+    function getBaseRewardAmount() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getReserveRate() external view returns (uint256);
 
     /**
      *
@@ -31,4 +36,14 @@ interface ILuckyGameHub {
      *
      */
     function withdraw() external;
+
+    /**
+     *
+     */
+    function latest() external view returns (address);
+
+    /**
+     *
+     */
+    function owned(address game) external view returns (bool);
 }

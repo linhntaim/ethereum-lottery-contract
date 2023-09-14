@@ -8,10 +8,46 @@ import "../interfaces/ILuckyGameHub.sol";
  *
  */
 abstract contract HubOwned is Context {
+    // #region Types
+
+    //
+
+    // #endregion
+
+    // #region Public states
+
+    //
+
+    // #endregion
+
+    // #region Internal states
+
+    //
+
+    // #endregion
+
+    // #region Private states
+
     /**
      *
      */
-    ILuckyGameHub internal _hubContract;
+    ILuckyGameHub private _hubContract;
+
+    // #endregion
+
+    // #region Events
+
+    //
+
+    // #endregion
+
+    // #region Errors
+
+    //
+
+    // #endregion
+
+    // #region Constructor
 
     /**
      *
@@ -19,6 +55,10 @@ abstract contract HubOwned is Context {
     constructor(ILuckyGameHub hubContract) {
         _hubContract = hubContract;
     }
+
+    // #endregion
+
+    // #region Modifiers
 
     /**
      *
@@ -29,12 +69,32 @@ abstract contract HubOwned is Context {
         _;
     }
 
+    // #endregion
+
+    // #region Fallback functions
+
+    //
+
+    // #endregion
+
+    // #region External functions
+
+    //
+
+    // #endregion
+
+    // #region Public functions
+
     /**
      *
      */
     function hub() public view virtual returns (address) {
         return address(_hubContract);
     }
+
+    // #endregion
+
+    // #region Internal functions
 
     /**
      *
@@ -47,6 +107,17 @@ abstract contract HubOwned is Context {
      *
      */
     function _checkHubOwned() internal view virtual {
-        require(_hubContract.owned(address(this)), "The hub does not own this contract.");
+        require(
+            _hubContract.owned(address(this)),
+            "The hub does not own this contract."
+        );
     }
+
+    // #endregion
+
+    // #region Private functions
+
+    //
+
+    // #endregion
 }

@@ -8,17 +8,87 @@ interface ILuckyGame {
     /**
      *
      */
+    function getStartAt() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getEndAt() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getTicketPrice() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getTicketFeeRate() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getBaseRewardAmount() external view returns (uint256);
+
+    /**
+     *
+     */
+    function countJoiners() external view returns (uint256);
+
+    /**
+     *
+     */
+    function countTickets() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getIncome() external view returns (uint256);
+
+    /**
+     *
+     */
     function getFees() external view returns (uint256);
 
     /**
      *
      */
-    function getWinners() external view returns (address[] memory);
+    function getPerformanceRewardAmount() external view returns (uint256);
 
     /**
      *
      */
-    function getWinningAmount(address winner) external view returns (uint256);
+    function getRewardAmount() external view returns (uint256);
+
+    /**
+     *
+     */
+    function getDrawnTicket() external view returns (string memory);
+
+    /**
+     *
+     */
+    function countWinners() external view returns (uint256);
+
+    /**
+     *
+     */
+    function isWinner(address someone) external view returns (bool);
+
+    /**
+     *
+     */
+    function paused() external view returns (bool);
+
+    /**
+     *
+     */
+    function pause() external;
+
+    /**
+     *
+     */
+    function resume() external;
 
     /**
      *

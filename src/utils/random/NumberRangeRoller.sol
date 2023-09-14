@@ -10,32 +10,46 @@ contract NumberRangeRoller is NumberRoller {
     /**
      *
      */
-    uint256 private _start;
+    uint256 private _numStart;
 
     /**
      *
      */
-    uint256 private _end;
+    uint256 private _numEnd;
 
     /**
      *
      */
-    constructor(uint256 start, uint256 end) NumberRoller() {
-        _start = start;
-        _end = end;
+    constructor(uint256 numStart, uint256 numEnd) NumberRoller() {
+        _numStart = numStart;
+        _numEnd = numEnd;
+    }
+
+    /**
+     *
+     */
+    function getNumStart() external view returns (uint256) {
+        return _numStart;
+    }
+
+    /**
+     *
+     */
+    function getNumEnd() external view returns (uint256) {
+        return _numEnd;
     }
 
     /**
      *
      */
     function valid(uint256 num) external view returns (bool) {
-        return num >= _start && num <= _end;
+        return num >= _numStart && num <= _numEnd;
     }
 
     /**
      *
      */
     function roll() external returns (uint256) {
-        return _roll(_start, _end);
+        return _roll(_numStart, _numEnd);
     }
 }

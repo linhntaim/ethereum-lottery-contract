@@ -10,6 +10,8 @@ import "../utils/HasBalance.sol";
  *
  */
 abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
+    // #region Types
+
     /**
      *
      */
@@ -20,35 +22,51 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
         uint256 createdAt;
     }
 
+    // #endregion
+
+    // #region Public states
+
+    //
+
+    // #endregion
+
+    // #region Internal states
+
+    //
+
+    // #endregion
+
+    // #region Private states
+
     /**
      *
      */
-    uint256 internal _ticketPrice = 10**18 / 100; // 0.01 coin
+    uint256 private _ticketPrice;
 
     /**
      * @dev Percentage value, range = [0, 100].
      */
-    uint256 internal _ticketFeeRate = 10; // 10%
+    uint256 private _ticketFeeRate;
 
     /**
      *
      */
-    uint256 internal _baseRewardAmount = 10**18; // 1 coin
+    uint256 private _baseRewardAmount;
 
     /**
      * @dev Percentage value, range = [0, 100].
      */
-    uint256 internal _reserveRate = 20; // 20%
+    uint256 private _reserveRate;
 
     /**
      *
      */
-    uint256 private _reserve = 0;
+    uint256 private _reserve;
 
     /**
      *
      */
-    uint256 private _profits = 0;
+    uint256 private _profits;
 
     /**
      *
@@ -59,6 +77,10 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
      *
      */
     mapping(address => GameInfo) private _createdGames;
+
+    // #endregion
+
+    // #region Events
 
     /**
      *
@@ -75,26 +97,99 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
      */
     event Deposited(address actor, uint256 amount);
 
-    /**
-     *
-     */
-    function latest() public view virtual returns (address) {
-        require(_games.length > 0, "No game now.");
-        return _games[_games.length - 1];
+    // #endregion
+
+    // #region Errors
+
+    //
+
+    // #endregion
+
+    // #region Constructor
+
+    constructor(
+        uint256 ticketPrice,
+        uint256 ticketFeeRate,
+        uint256 baseRewardAmount,
+        uint256 reserveRate
+    ) {
+        require(
+            baseRewardAmount > ticketPrice,
+            "The base rewarding amount should be logically bigger than the ticket price."
+        );
+        require(
+            ticketFeeRate <= 100 && reserveRate <= 100,
+            "Rates must be in the range from 0 to 100."
+        );
+
+        _reserve = 0;
+        _profits = 0;
+
+        _ticketPrice = ticketPrice;
+        _ticketFeeRate = ticketFeeRate;
+        _baseRewardAmount = baseRewardAmount;
+        _reserveRate = reserveRate;
     }
+
+    // #endregion
+
+    // #region Modifiers
+
+    //
+
+    // #endregion
+
+    // #region Fallback functions
 
     /**
      *
      */
-    function latestContract() public view returns (ILuckyGame) {
-        return _retrieveGameContract(latest());
+    receive() external payable {
+        uint256 balance = getBalance();
+
+        address sender = _msgSender();
+        uint256 depositingAmount = msg.value;
+
+        if (owned(sender)) {
+            // Return from created game
+            // Amount = Reward + Fees
+
+            // - Update profits
+            uint256 fees = _retrieveGameContract(sender).getFees();
+            require(
+                fees <= depositingAmount,
+                "Something wrong with the game's deposit."
+            );
+            _profits += fees;
+
+            // - Update reserve
+            if (depositingAmount > fees) {
+                uint256 reward = depositingAmount - fees;
+                if (reward > _baseRewardAmount) {
+                    _reserve +=
+                        ((reward - _baseRewardAmount) * _reserveRate) /
+                        100;
+                }
+            }
+        } else {
+            // Others will be considered as profits
+            _profits += depositingAmount;
+        }
+
+        assert(_reserve + _profits <= balance);
+
+        emit Deposited(sender, depositingAmount);
     }
+
+    // #endregion
+
+    // #region External functions
 
     /**
      *
      */
-    function owned(address game) public view returns (bool) {
-        return _createdGames[game].createdAt != 0;
+    function getReserveRate() external view returns (uint256) {
+        return _reserveRate;
     }
 
     /**
@@ -154,45 +249,49 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
         }
     }
 
+    // #endregion
+
+    // #region Public functions
+
     /**
      *
      */
-    receive() external payable {
-        uint256 balance = getBalance();
-
-        address sender = _msgSender();
-        uint256 depositingAmount = msg.value;
-
-        if (owned(sender)) {
-            // Return from created game
-            // Amount = Reward + Fees
-
-            // - Update profits
-            uint256 fees = _retrieveGameContract(sender).getFees();
-            require(
-                fees <= depositingAmount,
-                "Something wrong with the game's deposit."
-            );
-            _profits += fees;
-
-            // - Update reserve
-            if (depositingAmount > fees) {
-                uint256 reward = depositingAmount - fees;
-                if (reward > _baseRewardAmount) {
-                    _reserve +=
-                        ((reward - _baseRewardAmount) * _reserveRate) /
-                        100;
-                }
-            }
-        } else {
-            // Others will be considered as profits
-            _profits += depositingAmount;
-        }
-
-        assert(_reserve + _profits <= balance);
-
-        emit Deposited(sender, depositingAmount);
+    function getTicketPrice() public view returns (uint256) {
+        return _ticketPrice;
     }
+
+    /**
+     *
+     */
+    function getTicketFeeRate() public view returns (uint256) {
+        return _ticketFeeRate;
+    }
+
+    /**
+     *
+     */
+    function getBaseRewardAmount() public view returns (uint256) {
+        return _baseRewardAmount;
+    }
+
+    /**
+     *
+     */
+    function latest() public view virtual returns (address) {
+        require(_games.length > 0, "No game now.");
+        return _games[_games.length - 1];
+    }
+
+    /**
+     *
+     */
+    function owned(address game) public view returns (bool) {
+        return _createdGames[game].createdAt != 0;
+    }
+
+    // #endregion
+
+    // #region Internal functions
 
     /**
      *
@@ -210,4 +309,12 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
         pure
         virtual
         returns (ILuckyGame);
+
+    // #endregion
+
+    // #region Private functions
+
+    //
+
+    // #endregion
 }

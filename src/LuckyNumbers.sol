@@ -4,39 +4,26 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./abstracts/LuckyGame.sol";
 import "./interfaces/ILuckyGameHub.sol";
-import "./utils/JoiningList.sol";
+import "./utils/AddressList.sol";
 import "./utils/random/INumberRoller.sol";
 
 /**
  *
  */
 contract LuckyNumbers is LuckyGame {
-    using JoiningListMethods for JoiningList;
+    // #region Types
 
-    /**
-     * @dev Min = 1
-     */
-    uint256 internal _ticketNumCount;
+    using AddressListMethods for AddressList;
 
-    /**
-     *
-     */
-    bool internal _ticketNumRepetitionEnabled;
+    // #endregion
 
-    /**
-     *
-     */
-    bool internal _ticketNumOrderMattered;
+    // #region Public states
 
-    /**
-     *
-     */
-    INumberRoller internal _numberRoller;
+    //
 
-    /**
-     * @dev Ticket => (Joiners, Joiner => Time)
-     */
-    mapping(string => JoiningList) internal _joinedTickets;
+    // #endregion
+
+    // #region Internal states
 
     /**
      *
@@ -44,61 +31,291 @@ contract LuckyNumbers is LuckyGame {
     uint256[] internal _drawnTicketNums;
 
     /**
+     * @dev Ticket => (Joiners, Joiner => Time)
+     */
+    mapping(string => AddressList) private _joinedTickets;
+
+    // #endregion
+
+    // #region Private states
+
+    /**
+     *
+     */
+    bool private _ticketNumRepetitionEnabled;
+
+    /**
+     *
+     */
+    bool private _ticketNumOrderMattered;
+
+    /**
+     * @dev Min = 1
+     */
+    uint256 private _ticketNumCount;
+
+    /**
+     *
+     */
+    INumberRoller private _numberRollerContract;
+
+    // #endregion
+
+    // #region Events
+
+    //
+
+    // #endregion
+
+    // #region Errors
+
+    //
+
+    // #endregion
+
+    // #region Constructor
+
+    /**
      *
      */
     constructor(
         ILuckyGameHub hubContract,
-        uint256 ticketPrice,
-        uint256 ticketFeeRate,
         uint256 startAt,
         uint256 endAt,
         uint256 baseRewardAmount,
+        uint256 ticketPrice,
+        uint256 ticketFeeRate,
         uint256 ticketNumCount,
-        INumberRoller numberRoller,
         bool ticketNumRepetitionEnabled,
-        bool ticketNumOrderMattered
+        bool ticketNumOrderMattered,
+        INumberRoller numberRollerContract
     )
         LuckyGame(
             hubContract,
-            ticketPrice,
-            ticketFeeRate,
             startAt,
             endAt,
-            baseRewardAmount
+            baseRewardAmount,
+            ticketPrice,
+            ticketFeeRate
         )
     {
         require(ticketNumCount > 0, "Ticket cannot be empty.");
 
         _ticketNumCount = ticketNumCount;
-        _numberRoller = numberRoller;
         _ticketNumRepetitionEnabled = ticketNumRepetitionEnabled;
         _ticketNumOrderMattered = ticketNumOrderMattered;
+        _numberRollerContract = numberRollerContract;
     }
+
+    // #endregion
+
+    // #region Modifiers
+
+    //
+
+    // #endregion
+
+    // #region Fallback functions
+
+    //
+
+    // #endregion
+
+    // #region External functions
 
     /**
      *
      */
-    function getDrawnTicket() public view returns (string memory) {
+    function getDrawnTicket() external view returns (string memory) {
         return
             _drawnTicketNums.length > 0 ? _rebuildTicket(_drawnTicketNums) : "";
     }
 
+    // #endregion
+
+    // #region Public functions
+
     /**
-     * @dev Ticket format: "/([0-9]+;?)+/".
+     *
      */
-    function _joining(address joiner, string memory ticket) internal override {
-        uint256[] memory ticketNums = _parseTicket(ticket);
-        string memory sortedTicket = _buildSortedTicket(ticketNums);
-        for (uint256 i = 0; i < _ticketNumCount; ++i) {
-            _joinedTickets[sortedTicket].insert(joiner);
-        }
+    function getTicketNumCount() public view returns (uint256) {
+        return _ticketNumCount;
     }
 
     /**
      *
      */
-    function _parseTicket(string memory ticket)
+    function getTicketNumRepetitionEnabled() public view returns (bool) {
+        return _ticketNumRepetitionEnabled;
+    }
+
+    /**
+     *
+     */
+    function getTicketNumOrderMattered() public view returns (bool) {
+        return _ticketNumOrderMattered;
+    }
+
+    /**
+     *
+     */
+    function getNumberRoller() public view returns (address) {
+        return address(_numberRollerContract);
+    }
+
+    // #endregion
+
+    // #region Internal functions
+
+    /**
+     *
+     */
+    function _randomizeTicket() internal override returns (string memory) {
+        return _rebuildTicket(_randomizeTicketNums());
+    }
+
+    /**
+     *
+     */
+    function _joining(address joiner, string memory ticket) internal override {
+        _storeTicket(joiner, _parseTicket(ticket));
+    }
+
+    /**
+     *
+     */
+    function _storeTicket(address joiner, uint256[] memory ticketNums)
         internal
+        virtual
+    {
+        string memory joinedTicket = _buildJoinedTicket(ticketNums);
+        _joinedTickets[joinedTicket].add(joiner);
+    }
+
+    /**
+     *
+     */
+    function _buildJoinedTicket(uint256[] memory ticketNums)
+        internal
+        view
+        returns (string memory)
+    {
+        return _rebuildTicket(_sortTicketNums(ticketNums));
+    }
+
+    /**
+     *
+     */
+    function _rebuildTicket(uint256[] memory ticketNums)
+        internal
+        pure
+        returns (string memory)
+    {
+        string memory ticket = Strings.toString(ticketNums[0]);
+        for (uint256 i = 1; i < ticketNums.length; ++i) {
+            ticket = string.concat(
+                ticket,
+                ";",
+                Strings.toString(ticketNums[i])
+            );
+        }
+        return ticket;
+    }
+
+    /**
+     *
+     */
+    function _sortTicketNums(uint256[] memory ticketNums)
+        internal
+        view
+        returns (uint256[] memory)
+    {
+        if (!_ticketNumOrderMattered) {
+            uint256 i;
+            uint256 j;
+            uint256 n;
+            for (i = 0; i < _ticketNumCount - 1; ++i) {
+                for (j = i + 1; j < _ticketNumCount; ++j) {
+                    if (ticketNums[j] > ticketNums[i]) {
+                        n = ticketNums[i];
+                        ticketNums[i] = ticketNums[j];
+                        ticketNums[j] = n;
+                    }
+                }
+            }
+        }
+        return ticketNums;
+    }
+
+    /**
+     *
+     */
+    function _draw() internal virtual override {
+        _drawnTicketNums = _randomizeTicketNums();
+    }
+
+    /**
+     *
+     */
+    function _randomizeTicketNums() internal returns (uint256[] memory) {
+        uint256[] memory randomNums = new uint256[](_ticketNumCount);
+        uint256 randomNum;
+        uint256 i;
+        uint256 j;
+        bool repetitionFound;
+        for (i = 0; i < _ticketNumCount; ++i) {
+            repetitionFound = true;
+            while (repetitionFound) {
+                randomNum = _numberRollerContract.roll();
+
+                repetitionFound = false;
+                if (!_ticketNumRepetitionEnabled) {
+                    for (j = 0; j < i; ++j) {
+                        if (randomNums[j] == randomNum) {
+                            repetitionFound = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            randomNums[i] = randomNum;
+        }
+        return randomNums;
+    }
+
+    /**
+     *
+     */
+    function _recordWinners() internal virtual override {
+        AddressList storage winningAddressList = _joinedTickets[
+            _buildJoinedTicket(_drawnTicketNums)
+        ];
+        uint256 length = winningAddressList.length();
+        if (length == 1) {
+            _recordWinner(winningAddressList.addresses[0], getRewardAmount());
+        } else if (length > 1) {
+            mapping(address => uint256) storage mappingLots = winningAddressList
+                .values;
+            uint256 sumLots = winningAddressList.sumValues;
+            uint256 rewardAmountPerLot = getRewardAmount() / sumLots;
+            address winner;
+            for (uint256 i = 0; i < length; ++i) {
+                winner = winningAddressList.addresses[i];
+                _recordWinner(winner, mappingLots[winner] * rewardAmountPerLot);
+            }
+        }
+    }
+
+    // #endregion
+
+    // #region Private functions
+
+    /**
+     * @dev Ticket format: "/([0-9]+;?)+/".
+     */
+    function _parseTicket(string memory ticket)
+        private
         view
         returns (uint256[] memory)
     {
@@ -141,7 +358,7 @@ contract LuckyNumbers is LuckyGame {
             if (shouldStore) {
                 // Store current parsed num
                 require(
-                    _numberRoller.valid(currentNum),
+                    _numberRollerContract.valid(currentNum),
                     "Wrong ticket: Unaccepted number found."
                 );
                 if (!_ticketNumRepetitionEnabled) {
@@ -166,123 +383,5 @@ contract LuckyNumbers is LuckyGame {
         return ticketNums;
     }
 
-    /**
-     *
-     */
-    function _sortTicketNums(uint256[] memory ticketNums)
-        internal
-        view
-        returns (uint256[] memory)
-    {
-        if (!_ticketNumOrderMattered) {
-            uint256 i;
-            uint256 j;
-            uint256 n;
-            for (i = 0; i < _ticketNumCount - 1; ++i) {
-                for (j = i + 1; j < _ticketNumCount; ++j) {
-                    if (ticketNums[j] > ticketNums[i]) {
-                        n = ticketNums[i];
-                        ticketNums[i] = ticketNums[j];
-                        ticketNums[j] = n;
-                    }
-                }
-            }
-        }
-        return ticketNums;
-    }
-
-    /**
-     *
-     */
-    function _rebuildTicket(uint256[] memory ticketNums)
-        internal
-        pure
-        returns (string memory)
-    {
-        string memory joinedTicket = Strings.toString(ticketNums[0]);
-        for (uint256 i = 1; i < ticketNums.length; ++i) {
-            joinedTicket = string.concat(
-                joinedTicket,
-                ";",
-                Strings.toString(ticketNums[i])
-            );
-        }
-        return joinedTicket;
-    }
-
-    /**
-     *
-     */
-    function _buildSortedTicket(uint256[] memory ticketNums)
-        internal
-        view
-        returns (string memory)
-    {
-        return _rebuildTicket(_sortTicketNums(ticketNums));
-    }
-
-    /**
-     *
-     */
-    function _randomizeTicketNums() internal returns (uint256[] memory) {
-        uint256[] memory randomNums = new uint256[](_ticketNumCount);
-        uint256 randomNum;
-        uint256 i;
-        uint256 j;
-        bool repetitionFound;
-        for (i = 0; i < _ticketNumCount; ++i) {
-            repetitionFound = true;
-            while (repetitionFound) {
-                randomNum = _numberRoller.roll();
-
-                repetitionFound = false;
-                if (!_ticketNumRepetitionEnabled) {
-                    for (j = 0; j < i; ++j) {
-                        if (randomNums[j] == randomNum) {
-                            repetitionFound = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            randomNums[i] = randomNum;
-        }
-        return randomNums;
-    }
-
-    /**
-     *
-     */
-    function _randomizeTicket() internal override returns (string memory) {
-        return _rebuildTicket(_randomizeTicketNums());
-    }
-
-    /**
-     *
-     */
-    function _draw() internal override {
-        _drawnTicketNums = _randomizeTicketNums();
-    }
-
-    /**
-     *
-     */
-    function _recordWinners() internal override {
-        string memory drawnSortedTicket = _buildSortedTicket(_drawnTicketNums);
-        JoiningList storage winningList = _joinedTickets[drawnSortedTicket];
-
-        if (winningList.joiners.length > 0) {
-            _winners = winningList.joiners;
-
-            mapping(address => uint256) storage mappingLots = winningList.times;
-            uint256 totalLots = winningList.sumTimes;
-            uint256 winningAmountPerLot = getRewardAmount() / totalLots;
-            for (uint256 i = 0; i < _winners.length; ++i) {
-                _winningAmounts[_winners[i]] =
-                    winningAmountPerLot *
-                    mappingLots[_winners[i]];
-            }
-        }
-    }
+    // #endregion
 }
