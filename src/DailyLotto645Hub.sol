@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./abstracts/LuckyGameHub.sol";
+import "./abstracts/AccumulatedLuckyGameHub.sol";
 import "./utils/random/NumberRangeRoller.sol";
 import "./LuckyNumbers.sol";
 
 /**
  *
  */
-contract DailySimpleLotteryHub is LuckyGameHub {
+contract DailyLotto645Hub is AccumulatedLuckyGameHub {
     // #region Types
 
     //
@@ -51,10 +51,10 @@ contract DailySimpleLotteryHub is LuckyGameHub {
     // #region Constructor
 
     constructor()
-        LuckyGameHub(
+        AccumulatedLuckyGameHub(
+            5 * 10**18, // Base reward amount - 5
             10**18 / 1000, // Ticket price - 0.001
             10, // Ticket fee rate - 10%
-            10**18, // Base reward amount - 1
             20 // Reserve rate
         )
     {}
@@ -104,7 +104,7 @@ contract DailySimpleLotteryHub is LuckyGameHub {
     /**
      *
      */
-    function _create(uint256 accumulatedRewardAmount)
+    function _create(uint256 creatingRewardAmount)
         internal
         override
         returns (address)
@@ -120,17 +120,17 @@ contract DailySimpleLotteryHub is LuckyGameHub {
             this,
             currentDate + 1 * 3600, // Started at 01:00:00 UTC
             currentDate + 23 * 3600 - 1, // Ended at 22:59:59 UTC
-            accumulatedRewardAmount,
+            creatingRewardAmount,
             getTicketPrice(),
             getTicketFeeRate(),
             6, // Ticket num count
-            true, // Ticket num repetition enabled
-            true, // Ticket num order mattered
-            new NumberRangeRoller(0, 9)
+            false, // Ticket num repetition enabled
+            false, // Ticket num order mattered
+            new NumberRangeRoller(1, 45)
         );
         _dailyGames[currentDate] = address(game);
 
-        payable(_dailyGames[currentDate]).transfer(accumulatedRewardAmount);
+        payable(_dailyGames[currentDate]).transfer(creatingRewardAmount);
 
         return _dailyGames[currentDate];
     }

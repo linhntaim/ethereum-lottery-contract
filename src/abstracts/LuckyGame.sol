@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/ILuckyGame.sol";
 import "../interfaces/ILuckyGameHub.sol";
-import "../utils/HasBalance.sol";
 import "../utils/AddressList.sol";
+import "../utils/HasBalance.sol";
 import "./HubOwned.sol";
 
 /**
@@ -52,12 +52,22 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
+    bool private _onetimeLimited;
+
+    /**
+     *
+     */
     uint256 private _startAt;
 
     /**
      *
      */
     uint256 private _endAt;
+
+    /**
+     *
+     */
+    uint256 private _baseRewardAmount;
 
     /**
      *
@@ -72,17 +82,12 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    uint256 private _baseRewardAmount;
+    AddressList private _joiners;
 
     /**
      *
      */
-    AddressList private _joiningList;
-
-    /**
-     *
-     */
-    AddressList private _winningList;
+    AddressList private _winners;
 
     /**
      *
@@ -116,18 +121,16 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    event Recorded(address actor);
+    event Recorded(
+        address actor,
+        uint256 countWinners,
+        uint256 rewardingAmount
+    );
 
     /**
      *
      */
-    event Rewarded(
-        address actor,
-        uint256 count,
-        uint256 amount,
-        uint256 balanceBefore,
-        uint256 balanceAfter
-    );
+    event Rewarded(address actor, uint256 balanceBefore, uint256 balanceAfter);
 
     /**
      *
@@ -153,7 +156,8 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         uint256 endAt,
         uint256 baseRewardAmount,
         uint256 ticketPrice,
-        uint256 ticketFeeRate
+        uint256 ticketFeeRate,
+        bool onetimeLimited
     ) HubOwned(hubContract) {
         require(
             (startAt == 0 && endAt == 0) || (startAt < endAt),
@@ -176,6 +180,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         _baseRewardAmount = baseRewardAmount;
         _ticketPrice = ticketPrice;
         _ticketFeeRate = ticketFeeRate;
+        _onetimeLimited = onetimeLimited;
     }
 
     // #endregion
@@ -211,6 +216,13 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
+    function getBaseRewardAmount() external view returns (uint256) {
+        return _baseRewardAmount;
+    }
+
+    /**
+     *
+     */
     function getTicketPrice() external view returns (uint256) {
         return _ticketPrice;
     }
@@ -225,15 +237,8 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    function getBaseRewardAmount() external view returns (uint256) {
-        return _baseRewardAmount;
-    }
-
-    /**
-     *
-     */
     function isWinner(address someone) external view returns (bool) {
-        return _winningList.has(someone);
+        return _winners.has(someone);
     }
 
     /**
@@ -312,7 +317,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         _drawState = DrawState.RECORDING;
         _recordWinners();
         _drawState = DrawState.RECORDED;
-        emit Recorded(_msgSender());
+        emit Recorded(_msgSender(), _winners.length(), _winners.sumValues);
     }
 
     /**
@@ -334,8 +339,8 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
             address winner;
             uint256 rewardAmount;
             for (uint256 i = 0; i < countWinners_; ++i) {
-                winner = _winningList.addresses[i];
-                rewardAmount = _winningList.values[winner];
+                winner = _winners.addresses[i];
+                rewardAmount = _winners.values[winner];
 
                 require(balanceAfter >= rewardAmount, "Insuficient funds.");
                 payable(winner).transfer(rewardAmount);
@@ -346,17 +351,11 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         }
 
         // Checkpoint to make sure the current balance is fine
-        assert(balanceAfter == balanceBefore - _winningList.sumValues);
+        assert(balanceAfter == balanceBefore - _winners.sumValues);
 
         _drawState = DrawState.REWARDED;
 
-        emit Rewarded(
-            _msgSender(),
-            countWinners_,
-            _winningList.sumValues,
-            balanceBefore,
-            balanceAfter
-        );
+        emit Rewarded(_msgSender(), balanceBefore, balanceAfter);
     }
 
     /**
@@ -395,21 +394,28 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      *
      */
     function countJoiners() public view returns (uint256) {
-        return _joiningList.length();
+        return _joiners.length();
+    }
+
+    /**
+     *
+     */
+    function isJoiner(address someone) public view returns (bool) {
+        return _joiners.has(someone);
     }
 
     /**
      *
      */
     function countTickets() public view returns (uint256) {
-        return _joiningList.sumValues;
+        return _joiners.sumValues;
     }
 
     /**
      *
      */
     function countWinners() public view returns (uint256) {
-        return _winningList.length();
+        return _winners.length();
     }
 
     /**
@@ -464,8 +470,18 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
      */
     function _recordWinners() internal virtual;
 
+    /**
+     *
+     */
+    function _recordWinner(uint256 joinerIndex, uint256 rewardAmount) internal {
+        _recordWinner(_joiners.addresses[joinerIndex], rewardAmount);
+    }
+
+    /**
+     *
+     */
     function _recordWinner(address winner, uint256 rewardAmount) internal {
-        _winningList.add(winner, rewardAmount);
+        _winners.add(winner, rewardAmount);
     }
 
     // #endregion
@@ -485,6 +501,11 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
         require(inTime() && _drawState == DrawState.NOT_DRAWN, "Out of time.");
         // Is paused?
         require(!_paused, "Joining is temporarily disabled.");
+        // Prevent joiners from joining multiple times when flagged
+        require(
+            _onetimeLimited && isJoiner(joiner),
+            "You have already joined."
+        );
         // Sending exact price amount to buy ticket?
         require(
             msg.value == _ticketPrice,
@@ -493,8 +514,8 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
 
         _joining(joiner, ticket);
 
-        _joiningList.add(joiner);
-        emit Joined(joiner, ticket, _joiningList.length(), countTickets());
+        _joiners.add(joiner);
+        emit Joined(joiner, ticket, _joiners.length(), countTickets());
     }
 
     // #endregion

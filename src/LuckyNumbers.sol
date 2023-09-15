@@ -96,7 +96,8 @@ contract LuckyNumbers is LuckyGame {
             endAt,
             baseRewardAmount,
             ticketPrice,
-            ticketFeeRate
+            ticketFeeRate,
+            false // One-time limited?
         )
     {
         require(ticketNumCount > 0, "Ticket cannot be empty.");
@@ -122,6 +123,13 @@ contract LuckyNumbers is LuckyGame {
     // #endregion
 
     // #region External functions
+
+    /**
+     *
+     */
+    function getNumberRoller() external view returns (address) {
+        return address(_numberRollerContract);
+    }
 
     /**
      *
@@ -154,13 +162,6 @@ contract LuckyNumbers is LuckyGame {
      */
     function getTicketNumOrderMattered() public view returns (bool) {
         return _ticketNumOrderMattered;
-    }
-
-    /**
-     *
-     */
-    function getNumberRoller() public view returns (address) {
-        return address(_numberRollerContract);
     }
 
     // #endregion

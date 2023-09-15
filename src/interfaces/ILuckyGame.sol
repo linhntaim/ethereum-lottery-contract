@@ -18,6 +18,11 @@ interface ILuckyGame {
     /**
      *
      */
+    function getBaseRewardAmount() external view returns (uint256);
+
+    /**
+     *
+     */
     function getTicketPrice() external view returns (uint256);
 
     /**
@@ -28,12 +33,12 @@ interface ILuckyGame {
     /**
      *
      */
-    function getBaseRewardAmount() external view returns (uint256);
+    function countJoiners() external view returns (uint256);
 
     /**
      *
      */
-    function countJoiners() external view returns (uint256);
+    function isJoiner(address someone) external view returns (bool);
 
     /**
      *
@@ -59,11 +64,6 @@ interface ILuckyGame {
      *
      */
     function getRewardAmount() external view returns (uint256);
-
-    /**
-     *
-     */
-    function getDrawnTicket() external view returns (string memory);
 
     /**
      *

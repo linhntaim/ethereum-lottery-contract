@@ -10,6 +10,11 @@ interface ILuckyGameHub {
     /**
      *
      */
+    function getBaseRewardAmount() external view returns (uint256);
+
+    /**
+     *
+     */
     function getTicketPrice() external view returns (uint256);
 
     /**
@@ -20,12 +25,12 @@ interface ILuckyGameHub {
     /**
      *
      */
-    function getBaseRewardAmount() external view returns (uint256);
+    function getReserve() external view returns (uint256);
 
     /**
      *
      */
-    function getReserveRate() external view returns (uint256);
+    function getProfits() external view returns (uint256);
 
     /**
      *

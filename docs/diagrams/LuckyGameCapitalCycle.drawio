@@ -1,10 +1,10 @@
-<mxfile host="Electron" modified="2023-09-14T18:39:31.901Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.7.5 Chrome/114.0.5735.289 Electron/25.8.1 Safari/537.36" etag="maUg3tn0eD0JehLw7Bpc" version="21.7.5" type="device">
+<mxfile host="Electron" modified="2023-09-15T06:19:47.866Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.7.5 Chrome/114.0.5735.289 Electron/25.8.1 Safari/537.36" etag="HwfQVbjbAvVsLeKuVwTU" version="21.7.5" type="device">
   <diagram name="Page-1" id="4Z0XgDEkKNSZOzPUT4KB">
-    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1418" dy="828" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="PVLZscsEvBB52rjsfQya-2" value="Game Hub" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="PVLZscsEvBB52rjsfQya-2" value="Lucky Game Hub" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry width="360" height="480" as="geometry" />
         </mxCell>
         <mxCell id="PVLZscsEvBB52rjsfQya-1" value="Central&lt;br&gt;Funds" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" parent="PVLZscsEvBB52rjsfQya-2" vertex="1">
@@ -41,7 +41,7 @@
         <mxCell id="gC6UBXa2_5zePMVUiJNo-1" value="Reserve" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;dashed=1;" parent="PVLZscsEvBB52rjsfQya-2" vertex="1">
           <mxGeometry x="120" y="90" width="70" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="gC6UBXa2_5zePMVUiJNo-2" value="Accumulat-ed Reward" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;dashed=1;" parent="PVLZscsEvBB52rjsfQya-2" vertex="1">
+        <mxCell id="gC6UBXa2_5zePMVUiJNo-2" value="Creating Reward" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;dashed=1;" parent="PVLZscsEvBB52rjsfQya-2" vertex="1">
           <mxGeometry x="210" y="90" width="70" height="80" as="geometry" />
         </mxCell>
         <mxCell id="gC6UBXa2_5zePMVUiJNo-5" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;" parent="PVLZscsEvBB52rjsfQya-2" source="gC6UBXa2_5zePMVUiJNo-1" target="PVLZscsEvBB52rjsfQya-31" edge="1">
@@ -66,7 +66,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="PVLZscsEvBB52rjsfQya-3" value="Game" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="PVLZscsEvBB52rjsfQya-3" value="Lucky Game" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="380" width="470" height="480" as="geometry" />
         </mxCell>
         <mxCell id="PVLZscsEvBB52rjsfQya-7" value="Base&lt;br&gt;Reward" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;dashed=1;" parent="PVLZscsEvBB52rjsfQya-3" vertex="1">
