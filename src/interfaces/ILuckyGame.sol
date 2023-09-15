@@ -78,17 +78,7 @@ interface ILuckyGame {
     /**
      *
      */
-    function paused() external view returns (bool);
-
-    /**
-     *
-     */
-    function pause() external;
-
-    /**
-     *
-     */
-    function resume() external;
+    function getState() external view returns (string memory);
 
     /**
      *

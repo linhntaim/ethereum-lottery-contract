@@ -259,11 +259,10 @@ abstract contract LuckyGameHub is ILuckyGameHub, Ownable, HasBalance {
     {
         require(
             gameFees <= gameFunds,
-            "Something wrong with the game's deposit."
+            "Something wrong with the deposit from a created game."
         );
         _profits += gameFees;
 
-        // - Update reserve
         if (gameFunds > gameFees) {
             uint256 gameReward = gameFunds - gameFees;
             if (gameReward > _baseRewardAmount) {

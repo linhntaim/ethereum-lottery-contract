@@ -47,11 +47,6 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    bool private _paused;
-
-    /**
-     *
-     */
     bool private _onetimeLimited;
 
     /**
@@ -172,7 +167,6 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
             "Rate must be in the range from 0 to 100."
         );
 
-        _paused = false;
         _drawState = DrawState.NOT_DRAWN;
 
         _startAt = startAt;
@@ -244,22 +238,34 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
     /**
      *
      */
-    function paused() external view returns (bool) {
-        return _paused;
-    }
+    function getState() external view returns (string memory) {
+        if (_drawState == DrawState.DRAWING) {
+            return "drawing";
+        }
+        if (_drawState == DrawState.DRAWN) {
+            return "drawn";
+        }
+        if (_drawState == DrawState.RECORDING) {
+            return "recording";
+        }
+        if (_drawState == DrawState.RECORDED) {
+            return "recorded";
+        }
+        if (_drawState == DrawState.REWARDING) {
+            return "rewarding";
+        }
+        if (_drawState == DrawState.REWARDED) {
+            return "rewarded";
+        }
 
-    /**
-     *
-     */
-    function pause() external onlyHub {
-        _paused = true;
-    }
-
-    /**
-     *
-     */
-    function resume() external onlyHub {
-        _paused = false;
+        // Draw state: Not drawn
+        if (block.timestamp < _startAt) {
+            return "not_started";
+        }
+        if (block.timestamp > _endAt) {
+            return "ended";
+        }
+        return "opening";
     }
 
     /**
@@ -498,9 +504,7 @@ abstract contract LuckyGame is ILuckyGame, HubOwned, HasBalance {
             "Base reward has not been ready yet. Please wait."
         );
         // Check time range
-        require(inTime() && _drawState == DrawState.NOT_DRAWN, "Out of time.");
-        // Is paused?
-        require(!_paused, "Joining is temporarily disabled.");
+        require(inTime(), "Out of time.");
         // Prevent joiners from joining multiple times when flagged
         require(
             _onetimeLimited && isJoiner(joiner),
